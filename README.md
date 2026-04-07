@@ -1,5 +1,44 @@
 # ProductionSetup
 
+                🌐 Internet
+                     |
+              AWS Load Balancer
+                     |
+            Ingress Controller
+                     |
+     ---------------------------------
+     |        |        |             |
+ Jenkins   Grafana   SonarQube   Nexus
+     |        |        |             |
+           Kubernetes Cluster                         
+
+-----------------------------------------------------------------------------------------------------------
+
+
+DevOps-Production-Setup/
+│
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf (optional)
+│   ├── outputs.tf (optional)
+│
+├── jenkins/
+│   ├── userdata.sh
+│   ├── jenkins.yaml
+│   ├── plugins.txt
+│
+├── README.md
+├── .gitignore
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+           
+
 # DevOps Production Setup
 
 ## 🚀 Stack
