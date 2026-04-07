@@ -33,10 +33,22 @@ DevOps-Production-Setup/
 
 ---------------------------------------------------------------------------------------------------------------------
 
+Developer → GitHub → Jenkins
+            ↓
+        Build Docker Image
+            ↓
+        Push to DockerHub
+            ↓
+        Deploy to Kubernetes
+            ↓
+Ingress → Application
+            ↓
+Prometheus → Metrics
+Grafana → Dashboard
+SonarQube → Code Quality
 
 
-
-
+------------------------------------------------------------------------------------------------------------------------
            
 
 # DevOps Production Setup
