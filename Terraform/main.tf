@@ -2,6 +2,9 @@ provider "aws" {
   region = "ap-south-1"
 }
 
+# -----------------------
+# EXISTING INFRA
+# -----------------------
 data "aws_subnet" "public_a" {
   id = "subnet-03571a7062bf14be8"
 }
@@ -10,6 +13,9 @@ data "aws_security_group" "default" {
   id = "sg-0bd9eba5479b04af8"
 }
 
+# -----------------------
+# EC2 INSTANCE (JENKINS)
+# -----------------------
 resource "aws_instance" "jenkins_master" {
   ami           = "ami-05d2d839d4f73aafb"
   instance_type = "m7i-flex.large"
@@ -25,17 +31,31 @@ resource "aws_instance" "jenkins_master" {
     volume_type = "gp3"
   }
 
-  user_data = <<-EOF
-              ${file("userdata.sh")}
-              EOF
+  # -----------------------
+  # SSH CONNECTION (MANDATORY)
+  # -----------------------
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file("${path.module}/../DevOps.pem")
+    host        = self.public_ip
+  }
 
+  # -----------------------
+  # USER DATA
+  # -----------------------
+  user_data = file("${path.module}/../jenkins/userdata.sh")
+
+  # -----------------------
+  # FILE PROVISIONERS
+  # -----------------------
   provisioner "file" {
-    source      = "plugins.txt"
+    source      = "${path.module}/../jenkins/plugins.txt"
     destination = "/tmp/plugins.txt"
   }
 
   provisioner "file" {
-    source      = "jenkins.yaml"
+    source      = "${path.module}/../jenkins/jenkins.yaml"
     destination = "/tmp/jenkins.yaml"
   }
 
