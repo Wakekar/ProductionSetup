@@ -1,0 +1,15 @@
+docker-plugin
+docker-commons
+docker-workflow
+docker-build-step
+aws-credentials
+pipeline-stage-view
+kubernetes
+kubernetes-cli
+kubernetes-client-api
+kubernetes-credentials
+config-file-provider
+prometheus
+configuration-as-code
+workflow-aggregator
+git
