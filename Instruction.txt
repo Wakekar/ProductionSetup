@@ -1,4 +1,6 @@
-2. KUBERNETES SETUP (kubeadm)
+PART - 1    Instrction genrated during setups     >>   Look for Part 2  Below...
+
+. KUBERNETES SETUP (kubeadm)
 📌 Step 1: Install prerequisites (ALL NODES)
 sudo apt update
 sudo apt install -y containerd apt-transport-https curl
@@ -36,8 +38,181 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 kubectl create namespace ingress-nginx
 
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+
+Part - 2       Setup Instruction 
+
+🧠 FINAL TARGET
+
+You will have:
+
+Kubernetes cluster (kubeadm) ✅
+Helm installed ✅
+Ingress Controller (NGINX) ✅
+Prometheus + Grafana ✅
+SonarQube ✅
+Nexus ✅
+All accessible via Ingress (single entry point) ✅
+🚀 STEP 1: Kubernetes Cluster (kubeadm)
+
+👉 Do this on Master Node
+
+Initialize cluster
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+Configure kubectl
+mkdir -p $HOME/.kube
+sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $USER:$USER $HOME/.kube/config
+Install CNI (Calico)
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+Join worker nodes
+
+👉 Run command from kubeadm output on workers:
+
+kubeadm join <MASTER-IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+Verify
+kubectl get nodes
+🧭 STEP 2: Install Helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+🌐 STEP 3: Install Ingress Controller (NGINX)
+kubectl create namespace ingress-nginx
+
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 
 helm install ingress-nginx ingress-nginx/ingress-nginx \
   -n ingress-nginx
+✅ Verify
+kubectl get pods -n ingress-nginx
+📊 STEP 4: Prometheus + Grafana
+kubectl create namespace monitoring
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  -n monitoring
+Get Grafana password
+kubectl get secret -n monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+🔍 STEP 5: SonarQube
+kubectl create namespace sonarqube
+
+helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
+helm repo update
+
+helm install sonarqube sonarqube/sonarqube \
+  -n sonarqube
+📦 STEP 6: Nexus Repository
+kubectl create namespace nexus
+
+helm repo add sonatype https://sonatype.github.io/helm3-charts/
+helm repo update
+
+helm install nexus sonatype/nexus-repository-manager \
+  -n nexus
+🌐 STEP 7: INGRESS (MOST IMPORTANT PART)
+
+👉 Now everything will be exposed via Ingress
+
+🔥 Create single ingress file
+
+Create: ingress.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devops-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+
+  - host: grafana.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kube-prometheus-stack-grafana
+            port:
+              number: 80
+
+  - host: prometheus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kube-prometheus-stack-prometheus
+            port:
+              number: 9090
+
+  - host: sonarqube.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sonarqube
+            port:
+              number: 9000
+
+  - host: nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-repository-manager
+            port:
+              number: 8081
+Apply ingress
+kubectl apply -f ingress.yaml
+🖥️ STEP 8: Map Domains (LOCAL MACHINE)
+
+👉 Edit /etc/hosts (on your laptop)
+
+<EC2-PUBLIC-IP> grafana.local
+<EC2-PUBLIC-IP> prometheus.local
+<EC2-PUBLIC-IP> sonarqube.local
+<EC2-PUBLIC-IP> nexus.local
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  -n ingress-nginx
+
+
+Open these ports in Security Group:
+
+22      SSH
+80      HTTP (Ingress)
+443     HTTPS (future)
+30000-32767 (NodePort range)
+🚨 COMMON ERRORS
+❌ Ingress not working
+
+✔ Check:
+
+kubectl get svc -n ingress-nginx
+
+
+❌ Grafana not opening
+
+✔ Check service name:
+
+kubectl get svc -n monitoring
+🎯 FINAL RESULT
+
+You will access:
+
+http://grafana.local
+http://prometheus.local
+http://sonarqube.local
+http://nexus.local
